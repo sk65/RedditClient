@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Reddit Client</string>
+    <string name="rate">Рейтинг:</string>
+    <string name="entries">Посты</string>
+    <string name="details_entry">Пост</string>
+    <string name="posted_by">"Запостил: \u0020 "</string>
+</resources>

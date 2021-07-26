@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Reddit Client</string>
+    <string name="rate">Rate: </string>
+    <string name="posted_by">Posted by: \u0020 </string>
+    <string name="entries">Entries</string>
+    <string name="details_entry">Details entry</string>
+    <string name="refresh" translatable="false">refresh</string>
+
+</resources>
