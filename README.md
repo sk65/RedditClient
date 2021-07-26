@@ -1,6 +1,7 @@
 # What is this project?
 Reddit Client is an education project.
 It shows the top 50 entries from www.reddit.com/top 
+
 Click on the preview will open a link to the entry in a web view.
 # Main Features
 * [Kotlin](https://kotlinlang.org)
