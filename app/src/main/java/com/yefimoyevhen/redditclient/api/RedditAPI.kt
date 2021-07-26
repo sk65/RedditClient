@@ -15,8 +15,9 @@ interface RedditAPI {
         @Field("device_id") deviceId: String
     ): Response<AccessToken>
 
-    @GET("/top.json?limit=50")
+    @GET("/top.json")
     suspend fun getEntries(
         @Header("Authorization") authHeader: String,
+        @Query("limit") limit: Int = 50
     ): Response<Resp>
 }
