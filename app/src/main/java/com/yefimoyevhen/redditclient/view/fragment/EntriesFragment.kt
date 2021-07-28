@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.yefimoyevhen.redditclient.R
 import com.yefimoyevhen.redditclient.adapter.EntriesAdapter
 import com.yefimoyevhen.redditclient.databinding.FragmentEntriesBinding
@@ -21,6 +23,11 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class EntriesFragment : Fragment() {
 
+    var isError = false
+    var isLoading = false
+    var isLastPage = false
+    var isScrolling = false
+
     private var _binding: FragmentEntriesBinding? = null
     private val binding
         get() = _binding!!
@@ -32,7 +39,6 @@ class EntriesFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         redditViewModel = ViewModelProvider(requireActivity()).get(RedditViewModel::class.java)
-
         super.onCreate(savedInstanceState)
     }
 
@@ -52,11 +58,13 @@ class EntriesFragment : Fragment() {
         redditViewModel.resourceLiveData.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Success -> {
+                    isError = false
                     hideProgressBar()
                     entriesAdapter.differ.submitList(resource.data)
                 }
                 is Resource.Error -> {
                     hideProgressBar()
+                    isError = true
                     Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
                 }
                 is Resource.Loading -> {
@@ -78,21 +86,56 @@ class EntriesFragment : Fragment() {
 
     private fun hideProgressBar() {
         binding.progressBar.visibility = View.INVISIBLE
+        isLoading = false
     }
 
     private fun showProgressBar() {
         binding.progressBar.visibility = View.VISIBLE
+        isLoading = true
     }
 
     private fun setupRecyclerView() {
         binding.recyclerView.apply {
             adapter = entriesAdapter
             layoutManager = LinearLayoutManager(activity)
+            addOnScrollListener(this@EntriesFragment.scrollListener)
         }
     }
 
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+            val visibleItemCount = layoutManager.childCount
+            val totalItemCount = layoutManager.itemCount
+
+            val isNoErrors = !isError
+            val isNotLoadingAndNotLastPage = !isLoading && !isLastPage
+            val isAtLastItem = firstVisibleItemPosition + visibleItemCount >= totalItemCount
+            val isNotAtBeginning = firstVisibleItemPosition >= 0
+            val isTotalMoreThanVisible = totalItemCount >= 1
+            val shouldPaginate =
+                isNoErrors && isNotLoadingAndNotLastPage && isAtLastItem && isNotAtBeginning &&
+                        isTotalMoreThanVisible && isScrolling
+            if (shouldPaginate) {
+                redditViewModel.fetchData()
+                isScrolling = false
+            }
+        }
+
+        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+            super.onScrollStateChanged(recyclerView, newState)
+            if (newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+                isScrolling = true
+            }
+        }
     }
 }

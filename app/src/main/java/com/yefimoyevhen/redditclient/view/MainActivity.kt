@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.item_refresh) {
-            viewModel.fetchData()
+            viewModel.fetchData(true)
             return true
         }
         return super.onOptionsItemSelected(item)

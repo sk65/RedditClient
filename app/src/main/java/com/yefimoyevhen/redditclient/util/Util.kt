@@ -6,8 +6,9 @@ import android.content.Context.CONNECTIVITY_SERVICE
 import android.icu.text.CompactDecimalFormat
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities.*
+import com.yefimoyevhen.redditclient.R
 import com.yefimoyevhen.redditclient.model.Entry
-import com.yefimoyevhen.redditclient.model.response.DataX
+import com.yefimoyevhen.redditclient.model.response.Children
 import org.ocpsoft.prettytime.PrettyTime
 import java.util.*
 
@@ -23,7 +24,7 @@ fun convertDate(timestamp: Double): String {
     return PrettyTime().format(Date(myLong))
 }
 
-fun convertDataToEntry(data: DataX): Entry {
+internal fun Children.convertDataToEntry(): Entry {
     val entryLink = "$REDDIT_URL${data.permalink}"
     val subreddit = data.subreddit
     val title = data.title
@@ -44,7 +45,7 @@ fun convertDataToEntry(data: DataX): Entry {
     )
 }
 
-fun isOnline(context: Context): Boolean {
+fun hasInternetConnection(context: Context): Boolean {
     val connectivityManager =
         context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
     val capabilities =
@@ -58,3 +59,6 @@ fun isOnline(context: Context): Boolean {
     }
     return false
 }
+
+internal fun Exception.getMessageFromException(context: Context) =
+    localizedMessage ?: context.getString(R.string.something_goes_wrong)

@@ -7,7 +7,7 @@ import com.yefimoyevhen.redditclient.database.RedditDao
 import com.yefimoyevhen.redditclient.model.Entry
 import com.yefimoyevhen.redditclient.util.*
 import dagger.hilt.android.qualifiers.ApplicationContext
-import okhttp3.Credentials.basic
+import retrofit2.HttpException
 import javax.inject.Inject
 
 class RedditRepository @Inject constructor(
@@ -15,6 +15,7 @@ class RedditRepository @Inject constructor(
     private val api: RedditAPI,
     @ApplicationContext val context: Context
 ) {
+    private var afterKey: String? = null
 
     val resourceLiveData = MutableLiveData<Resource<List<Entry>>>()
 
@@ -22,21 +23,15 @@ class RedditRepository @Inject constructor(
 
     private suspend fun insertEntry(entry: Entry) = dao.insertEntry(entry)
 
-    private suspend fun getAccessToken() = api.getAccessToken(
-        REDDIT_ACCESS_TOKEN_URL,
-        basic(REDDIT_USERNAME, REDDIT_PASSWORD),
-        APP_ONLY_GRANT_TYPE,
-        DEVICE_ID
-    )
-
     private suspend fun deleteAllEntry() = dao.deleteAllEntry()
 
-    private suspend fun findAllEntriesFromInternet(token: String) =
-        api.getEntries("Bearer$token")
-
-    suspend fun fetchData() {
+    suspend fun fetchData(isRefresh: Boolean) {
         resourceLiveData.postValue(Resource.Loading())
-        if (isOnline(context)) {
+        if (hasInternetConnection(context)) {
+            if (isRefresh) {
+                deleteAllEntry()
+                afterKey = null
+            }
             refreshData()
         }
         val entries = findAllEntriesFromDB()
@@ -44,24 +39,35 @@ class RedditRepository @Inject constructor(
     }
 
     private suspend fun refreshData() {
-        val tokenResponse = getAccessToken()
-        if (tokenResponse.isSuccessful) {
-            val accessToken = tokenResponse.body()?.access_token ?: return
-            val entriesResponse = findAllEntriesFromInternet(accessToken)
-            if (entriesResponse.isSuccessful) {
-                val children = entriesResponse.body()?.data?.children
-                children?.let {
-                    deleteAllEntry()
-                    children.forEach { child ->
-                        val entry = convertDataToEntry(child.data)
-                        insertEntry(entry)
+        try {
+            val tokenResponse = api.getAccessToken()
+            if (tokenResponse.isSuccessful) {
+                val accessToken = tokenResponse.body()!!.access_token
+                //val limit = if (afterKey == null) COUNT_OF_PAGE else INITIAL_COUNT_OF_PAGE
+                val entriesResponse = api.getEntries(
+                    authHeader = "$BEARER$accessToken",
+                    after = afterKey,
+                    limit = COUNT_OF_PAGE
+                )
+                if (entriesResponse.isSuccessful) {
+                    entriesResponse.body()!!.data.apply {
+                        afterKey = after
+                        children.forEach { insertEntry(it.convertDataToEntry()) }
                     }
+                } else {
+                    resourceLiveData.postValue(Resource.Error(tokenResponse.message()))
                 }
             } else {
                 resourceLiveData.postValue(Resource.Error(tokenResponse.message()))
             }
-        } else {
-            resourceLiveData.postValue(Resource.Error(tokenResponse.message()))
+        } catch (e: HttpException) {
+            resourceLiveData.postValue(
+                Resource.Error(e.getMessageFromException(context))
+            )
+        } catch (e: Exception) {
+            resourceLiveData.postValue(
+                Resource.Error(e.getMessageFromException(context))
+            )
         }
     }
 }

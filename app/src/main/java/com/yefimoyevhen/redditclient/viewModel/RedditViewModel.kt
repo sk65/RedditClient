@@ -24,9 +24,9 @@ constructor(
         resourceLiveData = repository.resourceLiveData
     }
 
-    fun fetchData() {
+    fun fetchData(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            repository.fetchData()
+            repository.fetchData(isRefresh)
         }
     }
 
