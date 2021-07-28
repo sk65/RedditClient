@@ -11,4 +11,3 @@ const val REDDIT_USERNAME = "h7i1bueEhIDBr2pPZYmF8A"
 const val REDDIT_PASSWORD = "LKMEWSYWeRacAPACvM3FgfyKfQUQcw"
 const val URL_ARGUMENT_KEY = "url"
 const val COUNT_OF_PAGE = 5
-const val INITIAL_COUNT_OF_PAGE = COUNT_OF_PAGE * 3

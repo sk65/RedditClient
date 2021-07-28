@@ -2,6 +2,7 @@ package com.yefimoyevhen.redditclient.repository
 
 import android.content.Context
 import androidx.lifecycle.MutableLiveData
+import com.yefimoyevhen.redditclient.R
 import com.yefimoyevhen.redditclient.api.RedditAPI
 import com.yefimoyevhen.redditclient.database.RedditDao
 import com.yefimoyevhen.redditclient.model.Entry
@@ -33,6 +34,8 @@ class RedditRepository @Inject constructor(
                 afterKey = null
             }
             refreshData()
+        } else {
+            resourceLiveData.postValue(Resource.Error(context.getString(R.string.no_internet_connection)))
         }
         val entries = findAllEntriesFromDB()
         resourceLiveData.postValue(Resource.Success(entries))
@@ -43,12 +46,10 @@ class RedditRepository @Inject constructor(
             val tokenResponse = api.getAccessToken()
             if (tokenResponse.isSuccessful) {
                 val accessToken = tokenResponse.body()!!.access_token
-                //val limit = if (afterKey == null) COUNT_OF_PAGE else INITIAL_COUNT_OF_PAGE
                 val entriesResponse = api.getEntries(
-                    authHeader = "$BEARER$accessToken",
-                    after = afterKey,
-                    limit = COUNT_OF_PAGE
-                )
+                    "$BEARER$accessToken",
+                    COUNT_OF_PAGE,
+                    afterKey)
                 if (entriesResponse.isSuccessful) {
                     entriesResponse.body()!!.data.apply {
                         afterKey = after

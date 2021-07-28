@@ -1,6 +1,5 @@
 package com.yefimoyevhen.redditclient.util
 
-
 import android.content.Context
 import android.content.Context.CONNECTIVITY_SERVICE
 import android.icu.text.CompactDecimalFormat
@@ -11,7 +10,6 @@ import com.yefimoyevhen.redditclient.model.Entry
 import com.yefimoyevhen.redditclient.model.response.Children
 import org.ocpsoft.prettytime.PrettyTime
 import java.util.*
-
 
 fun convertNumberToShortFormat(number: Int, locale: Locale = Locale.US): String {
     val compactDecimalFormat =

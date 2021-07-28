@@ -16,6 +16,7 @@ import com.yefimoyevhen.redditclient.adapter.EntriesAdapter
 import com.yefimoyevhen.redditclient.databinding.FragmentEntriesBinding
 import com.yefimoyevhen.redditclient.util.Resource
 import com.yefimoyevhen.redditclient.util.URL_ARGUMENT_KEY
+import com.yefimoyevhen.redditclient.util.hasInternetConnection
 import com.yefimoyevhen.redditclient.viewModel.RedditViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -54,7 +55,6 @@ class EntriesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
 
-
         redditViewModel.resourceLiveData.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Success -> {
@@ -74,14 +74,27 @@ class EntriesFragment : Fragment() {
         }
 
         entriesAdapter.setOnItemClickListener {
-            val bundle = Bundle().apply {
-                putSerializable(URL_ARGUMENT_KEY, it)
+            if (hasInternetConnection(requireContext())) {
+                openEntryDetails(it)
+            } else {
+                Toast.makeText(
+                    context,
+                    getString(R.string.no_internet_connection),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-            findNavController().navigate(
-                R.id.action_entriesFragment_to_detailsEntryFragment,
-                bundle
-            )
+
         }
+    }
+
+    private fun openEntryDetails(url: String) {
+        val bundle = Bundle().apply {
+            putSerializable(URL_ARGUMENT_KEY, url)
+        }
+        findNavController().navigate(
+            R.id.action_entriesFragment_to_detailsEntryFragment,
+            bundle
+        )
     }
 
     private fun hideProgressBar() {
@@ -106,7 +119,6 @@ class EntriesFragment : Fragment() {
         _binding = null
         super.onDestroyView()
     }
-
 
     private val scrollListener = object : RecyclerView.OnScrollListener() {
         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

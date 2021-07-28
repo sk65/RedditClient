@@ -29,6 +29,4 @@ constructor(
             repository.fetchData(isRefresh)
         }
     }
-
-
 }
